@@ -1,15 +1,32 @@
+# hello.py
 import streamlit as st
 from modules.pdf_text_extractor import extract_text_from_pdf_url
 from modules.text_processor import process_text
 from modules.summarizer import abstractive_summarize
 from requests.exceptions import ConnectionError
+from modules.home_page import authenticate_user, display_home_page
 
 def main():
     st.set_page_config(page_title="Zambian Summarization App", page_icon="📜", layout="wide")
 
-    # Section for PDF Text Extraction
-    st.header("PDF Text Extraction")
+    # Display the home page by default
+    name, password = display_home_page()
 
+    # Check if the entered password is correct
+    if password == "knps":
+        st.success(f"Welcome, {name}! You are authenticated.")
+
+        # Section for PDF Text Extraction
+        st.header("PDF Text Extraction")
+
+        # Get the user's choice
+        section_choice = st.radio("Select a section", ["Home", "PDF Text Extraction"])
+
+        # Check the user's choice and display the appropriate section
+        if section_choice == "PDF Text Extraction":
+            pdf_text_extraction_section()
+
+def pdf_text_extraction_section():
     # User input: PDF URL
     pdf_url = st.text_input("Enter the PDF URL:")
 

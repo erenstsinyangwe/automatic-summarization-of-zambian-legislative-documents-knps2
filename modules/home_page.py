@@ -1,3 +1,4 @@
+# home_page.py
 import streamlit as st
 
 def authenticate_user():
@@ -36,8 +37,7 @@ def display_home_page():
             """
         )
 
-        # Automatically transition to the main app after successful authentication
-        st.experimental_rerun()
-
+        return name, password  # Return the name and password if authentication is successful
     else:
         st.error("Authentication failed. Please enter the correct password to proceed.")
+        return None, None  # Return None values if authentication fails
