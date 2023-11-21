@@ -1,51 +1,69 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import streamlit as st
-from streamlit.logger import get_logger
+from modules.pdf_text_extractor import extract_text_from_pdf_url
+from modules.text_processor import process_text
+from modules.summarizer import abstractive_summarize
+from requests.exceptions import ConnectionError
 
-LOGGER = get_logger(__name__)
+def main():
+    st.set_page_config(page_title="Zambian Summarization App", page_icon="📜", layout="wide")
 
+    # Section for PDF Text Extraction
+    st.header("PDF Text Extraction")
 
-def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
+    # User input: PDF URL
+    pdf_url = st.text_input("Enter the PDF URL:")
 
-    st.write("# Welcome to Streamlit! 👋")
+    # User input: Desired percentage for the summary length
+    summary_percentage = st.slider("Select the desired percentage for the summary length", 1, 100, 20, 1)
 
-    st.sidebar.success("Select a demo above.")
+    # Extract text when the user clicks the button
+    if st.button("Extract Text"):
+        # Display extraction message
+        extract_message = st.empty()
+        extract_message.info("Extracting text from the PDF. Please wait...")
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+        try:
+            # Extract text
+            extracted_text = extract_text_from_pdf_url(pdf_url)
 
+            # Update or delete extraction message
+            if extracted_text:
+                extract_message.success("Text extraction complete.")
+            else:
+                extract_message.error("Failed to extract text from the PDF. Please check the URL.")
+                # Stop further processing if extraction fails
+                return
+
+            # Process the extracted text
+            process_message = st.empty()
+            process_message.info("Processing the extracted text...")
+
+            processed_text = process_text(extracted_text)
+
+            # Update or delete processing message
+            if processed_text:
+                process_message.success("Text processing complete.")
+            else:
+                process_message.error("Text processing failed. Please check the input text.")
+                # Stop further processing if text processing fails
+                return
+
+            # Summarize the processed text with the specified percentage
+            summary_message = st.empty()
+            summary_message.info("Generating text summary...")
+
+            summary = abstractive_summarize(processed_text, summary_percentage)
+
+            # Display the processed text and summary
+            if summary:
+                summary_message.success("Text summarization complete.")
+                st.header("Text Summary")
+                st.text(summary)
+            else:
+                summary_message.error("Text summarization failed. Please check the processed text.")
+
+        except ConnectionError:
+            st.error("Connection Error: Please check your internet connection and try again.")
 
 if __name__ == "__main__":
-    run()
+    main()
